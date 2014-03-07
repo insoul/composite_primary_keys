@@ -7,8 +7,15 @@ module ActiveRecord
     end
     
     def self.establish_connection(spec = ENV["DATABASE_URL"])
-      resolver = ConnectionAdapters::ConnectionSpecification::Resolver.new spec, configurations
-      spec = resolver.spec
+      if ::CompositePrimaryKeys.rails41?
+        # deprecated DATABASE_URL
+        # https://github.com/rails/rails/commit/c390e60811b2e11bfd5d79b15bfb43690c1a1339
+        resolver = ConnectionAdapters::ConnectionSpecification::Resolver.new configurations
+        spec = resolver.spec(spec)
+      else
+        resolver = ConnectionAdapters::ConnectionSpecification::Resolver.new spec, configurations
+        spec = resolver.spec
+      end
       
       # CPK
       load_cpk_adapter(spec.config[:adapter])
